@@ -6,10 +6,10 @@ from encoder import *
 enc = Encoder()
 
 listing = [
-    [Assign("A%", 0)],
-    [Print("A%")],
-    [Assign("A%", BinaryOp("A%", "+", 1))],
-    [Goto(20)]
+    Assign("A%", 0), NewLine(),
+    Print("A%"),
+    Assign("A%", BinaryOp("A%", "+", 1)),
+    Goto(20)
     ]
 
 program = enc.encode(listing, start = 10, step = 10)

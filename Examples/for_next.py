@@ -6,7 +6,7 @@ from encoder import *
 enc = Encoder()
 
 listing = [
-    [ForNext(BinaryOp("A%", "=", 1), 11, Print("A%"), step = 2)]
+    ForNext(BinaryOp("A%", "=", 1), 11, [Print("A%")], step = 2)
     ]
 
 program = enc.encode(listing, start = 10, step = 10)

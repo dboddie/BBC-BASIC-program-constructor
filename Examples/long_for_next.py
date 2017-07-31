@@ -6,10 +6,9 @@ from encoder import *
 enc = Encoder()
 
 listing = [
-    Assign("A%", 0), NewLine(),
-    Print("A%"),
-    Assign("A%", BinaryOp("A%", "+", 1)),
-    IfThenElse(BinaryOp("A%", "<", 10), [Goto(20)])
+    ForNext(BinaryOp("A%", "=", 1), 11,
+        [Print('A%;" ";'),
+         Print(BinaryOp(11, "-", "A%"))], step = 2)
     ]
 
 program = enc.encode(listing, start = 10, step = 10)

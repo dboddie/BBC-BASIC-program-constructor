@@ -6,8 +6,8 @@ from encoder import *
 enc = Encoder()
 
 listing = [
-    [Print(PAGE())],
-    [Print("~", PAGE())]
+    Print(PAGE()),
+    Print("~", PAGE())
     ]
 
 program = enc.encode(listing, start = 10, step = 10)
