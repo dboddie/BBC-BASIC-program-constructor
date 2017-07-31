@@ -43,15 +43,15 @@ class NewLine(Tokens):
 
 class Print(Tokens):
 
-    def __init__(self, expression = None):
-        self.expression = expression
+    def __init__(self, *expressions):
+        self.expressions = expressions
     
     def visit(self):
         return str(self)
     
     def __str__(self):
-        if self.expression:
-            return "\xf1" + str(self.expression)
+        if self.expressions:
+            return "\xf1" + "".join(map(str, self.expressions))
         else:
             return "\xf1"
 
@@ -147,6 +147,46 @@ class PAGE(Tokens):
     def __str__(self):
         return "\x90"
 
+class Tab(Tokens):
+
+    def __init__(self, x, y = None):
+        self.x = x
+        self.y = y
+    
+    def __str__(self):
+    
+        output = "\x8a" + str(self.x)
+        if self.y != None:
+            output += "," + str(self.y) + ")"
+        
+        return output
+
+class Cls(Tokens):
+
+    def __str__(self):
+        return "\xdb"
+
+class End(Tokens):
+
+    def __str__(self):
+        return "\xe0"
+
+class Proc(Tokens):
+
+    def __init__(self, name, *arguments):
+    
+        self.name = name
+        self.arguments = arguments
+    
+    def __str__(self):
+    
+        output = "\xf2" + self.name
+        
+        if self.arguments:
+            output += "(" + ",".join(map(str, self.arguments)) + ")"
+        
+        return output
+
 
 class Statement:
     pass
@@ -198,7 +238,6 @@ class ForNext(Statement):
         body_tokens = visit(self.body) + ["\xed"]
         return tokens + body_tokens
 
-
 class RepeatUntil(Statement):
 
     def __init__(self, body, condition):
@@ -212,6 +251,26 @@ class RepeatUntil(Statement):
         body_tokens = visit(self.body)
         condition_tokens = ["\xfd" + str(self.condition)]
         return tokens + body_tokens + condition_tokens
+
+class DefProc(Statement):
+
+    def __init__(self, name, arguments, body):
+    
+        self.name = name
+        self.arguments = arguments
+        self.body = body
+    
+    def visit(self):
+    
+        # Always start a definition on a new line.
+        tokens = [str(NewLine())]
+        tokens.append("\xdd\xf2" + self.name)
+        
+        if self.arguments:
+            tokens[1] += "(" + ",".join(map(str, self.arguments)) + ")"
+        
+        tokens += visit(self.body)
+        return tokens + ["\xe1"]
 
 
 class Encoder:
