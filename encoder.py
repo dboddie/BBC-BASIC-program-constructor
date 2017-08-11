@@ -147,6 +147,21 @@ class PAGE(Tokens):
     def __str__(self):
         return "\x90"
 
+class TOP(Tokens):
+
+    def __str__(self):
+        return "\xb8"
+
+class LOMEM(Tokens):
+
+    def __str__(self):
+        return "\xd2"
+
+class HIMEM(Tokens):
+
+    def __str__(self):
+        return "\xd3"
+
 class Tab(Tokens):
 
     def __init__(self, x, y = None):
@@ -186,6 +201,61 @@ class Proc(Tokens):
             output += "(" + ",".join(map(str, self.arguments)) + ")"
         
         return output
+
+class Fn(Tokens):
+
+    def __init__(self, name, *arguments):
+    
+        self.name = name
+        self.arguments = arguments
+    
+    def __str__(self):
+    
+        output = "\xa4" + self.name
+        
+        if self.arguments:
+            output += "(" + ",".join(map(str, self.arguments)) + ")"
+        
+        return output
+
+class Call(Tokens):
+
+    def __str__(self):
+        return "\xd6"
+
+class Builtin(Tokens):
+
+    def __init__(self, *arguments):
+    
+        self.arguments = arguments
+    
+    def __str__(self):
+    
+        output = self.token
+        if not self.name.endswith("("):
+            output += "("
+        
+        return output + ",".join(map(str, self.arguments)) + ")"
+
+class SIN(Builtin):
+    name = "SIN"
+    token = "\xb5"
+
+class COS(Builtin):
+    name = "COS"
+    token = "\x9b"
+
+class LEFT(Builtin):
+    name = "LEFT$("
+    token = "\xc0"
+
+class MID(Builtin):
+    name = "MID$("
+    token = "\xc1"
+
+class RIGHT(Builtin):
+    name = "RIGHT$("
+    token = "\xc2"
 
 
 class Statement:
@@ -271,6 +341,49 @@ class DefProc(Statement):
         
         tokens += visit(self.body)
         return tokens + ["\xe1"]
+
+class DefFn(Statement):
+
+    def __init__(self, name, arguments, body):
+    
+        self.name = name
+        self.arguments = arguments
+        self.body = body
+    
+    def visit(self):
+    
+        # Always start a definition on a new line.
+        tokens = [str(NewLine())]
+        tokens.append("\xdd\xa4" + self.name)
+        
+        if self.arguments:
+            tokens[1] += "(" + ",".join(map(str, self.arguments)) + ")"
+        
+        tokens += visit(self.body)
+        return tokens
+
+class Return(Statement):
+
+    def __init__(self, expression):
+    
+        self.expression = expression
+    
+    def visit(self):
+    
+        tokens = ["=" + str(self.expression)]
+        return tokens
+
+class Dim(Statement):
+
+    def __init__(self, name, expression):
+    
+        self.name = name
+        self.expression = expression
+    
+    def visit(self):
+    
+        tokens = ["\xde" + name + "(" + str(self.expression) + ")"]
+        return tokens
 
 
 class Encoder:
