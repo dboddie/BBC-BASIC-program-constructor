@@ -26,9 +26,9 @@ listing = [
     RepeatUntil([
         VDU([Add(223, RND(2))]), NewLine(),
         Assign("A%", Subtract(RND(4), 1)), NewLine(),
-        Assign("B%", MOD(Parens(Add("A%", 2)), 4)), NewLine(),
-        Assign("A%", Add("&C00", Parens(Multiply("A%", 4)))), NewLine(),
-        Assign("B%", Add("&C00", Parens(Multiply("B%", 4)))), NewLine(),
+        Assign("B%", MOD(Add("A%", 2), 4)), NewLine(),
+        Assign("A%", Add("&C00", Multiply("A%", 4))), NewLine(),
+        Assign("B%", Add("&C00", Multiply("B%", 4))), NewLine(),
         Assign("!A%", EOR("!A%", "!B%")), NewLine()
         ],
         FALSE())
