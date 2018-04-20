@@ -64,6 +64,18 @@ class Assign(Tokens):
     def __str__(self):
         return str(self.name) + "=" + str(self.expression)
 
+class UnaryOp(Tokens):
+
+    def __init__(self, right):
+        self.right = right
+    
+    def __str__(self):
+        return self.token + str(self.right)
+
+class NOT(UnaryOp):
+    token = "\xac"
+
+
 class BinaryOp(Tokens):
 
     def __init__(self, left, operator, right):
@@ -124,6 +136,32 @@ class GreaterThanEquals(BinaryOp):
     def __init__(self, left, right):
         BinaryOp.__init__(self, left, ">=", right)
 
+class DIV(BinaryOp):
+
+    def __init__(self, left, right):
+        BinaryOp.__init__(self, left, "\x81", right)
+
+class MOD(BinaryOp):
+
+    def __init__(self, left, right):
+        BinaryOp.__init__(self, left, "\x83", right)
+
+class AND(BinaryOp):
+
+    def __init__(self, left, right):
+        BinaryOp.__init__(self, left, "\x80", right)
+
+class EOR(BinaryOp):
+
+    def __init__(self, left, right):
+        BinaryOp.__init__(self, left, "\x82", right)
+
+class OR(BinaryOp):
+
+    def __init__(self, left, right):
+        BinaryOp.__init__(self, left, "\x84", right)
+
+
 class Goto(Tokens):
 
     def __init__(self, number):
@@ -142,25 +180,57 @@ class Goto(Tokens):
         else:
             return "\xe5\x8d" + str(self.number)
 
-class PAGE(Tokens):
+
+class VDU(Tokens):
+
+    def __init__(self, arguments):
+        self.arguments = arguments
+    
+    def __str__(self):
+    
+        return "\xef" + ",".join(map(str, self.arguments))
+
+
+class Parens(Tokens):
+
+    def __init__(self, expression):
+        self.expression = expression
+    
+    def __str__(self):
+        return "(" + str(self.expression) + ")"
+
+
+class Simple(Tokens):
 
     def __str__(self):
-        return "\x90"
+        return chr(self.value)
 
-class TOP(Tokens):
 
-    def __str__(self):
-        return "\xb8"
+class Constant(Simple):
+    pass
 
-class LOMEM(Tokens):
+class FALSE(Constant):
+    value = 0xa3
 
-    def __str__(self):
-        return "\xd2"
+class TRUE(Constant):
+    value = 0xb9
 
-class HIMEM(Tokens):
 
-    def __str__(self):
-        return "\xd3"
+class SystemVariable(Simple):
+    pass
+
+class PAGE(SystemVariable):
+    value = 0x90
+
+class TOP(SystemVariable):
+    value = 0xb8
+
+class LOMEM(SystemVariable):
+    value =0xd2
+
+class HIMEM(SystemVariable):
+    value = 0xd3
+
 
 class Tab(Tokens):
 
@@ -225,24 +295,30 @@ class Call(Tokens):
 
 class Builtin(Tokens):
 
+    """Describes built-in functions and commands, defining their detokenised
+    text and the tokens used to encode them.
+    
+    If a token needs to be encoded with parentheses, an opening parenthesis is
+    stored after the token in the token attribute."""
+    
     def __init__(self, *arguments):
     
         self.arguments = arguments
     
     def __str__(self):
     
-        output = self.token
-        if not self.name.endswith("("):
-            output += "("
+        output = self.token + ",".join(map(str, self.arguments))
+        if self.name.endswith("(") or self.token.endswith("("):
+            output += ")"
         
-        return output + ",".join(map(str, self.arguments)) + ")"
+        return output
 
 class SIN(Builtin):
-    name = "SIN"
+    name = "SIN("
     token = "\xb5"
 
 class COS(Builtin):
-    name = "COS"
+    name = "COS("
     token = "\x9b"
 
 class LEFT(Builtin):
@@ -256,6 +332,14 @@ class MID(Builtin):
 class RIGHT(Builtin):
     name = "RIGHT$("
     token = "\xc2"
+
+class MODE(Builtin):
+    name = "MODE"
+    token = "\xeb"
+
+class RND(Builtin):
+    name = "RND"
+    token = "\xb3("
 
 
 class Statement:
