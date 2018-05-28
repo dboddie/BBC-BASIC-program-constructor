@@ -200,6 +200,17 @@ class Parens(Tokens):
         return "(" + str(self.expression) + ")"
 
 
+class Byte(Parens):
+
+    def __str__(self):
+        return "?" + str(self.expression)
+
+class Word(Parens):
+
+    def __str__(self):
+        return "!" + str(self.expression)
+
+
 class Simple(Tokens):
 
     def __str__(self):
@@ -214,6 +225,9 @@ class FALSE(Constant):
 
 class TRUE(Constant):
     value = 0xb9
+
+class RUN(Simple):
+    value = 0xf9
 
 
 class SystemVariable(Simple):
@@ -339,11 +353,38 @@ class MODE(Builtin):
 
 class RND(Builtin):
     name = "RND"
-    token = "\xb3("
+    token = "\xb3"
+    
+    def __str__(self):
+    
+        output = self.token
+        if self.arguments:
+            output += "(" + ",".join(map(str, self.arguments)) + ")"
+        
+        return output
 
 
 class Statement:
     pass
+
+class If(Statement):
+
+    def __init__(self, test, then, else_ = None):
+    
+        self.test = test
+        self.then = then
+    
+    def visit(self):
+    
+        tokens = ["\xe7" + str(self.test)]
+        
+        then_tokens = visit(self.then)
+        
+        # Join the IF token with the first THEN token but do not include a THEN
+        # token (0x8c).
+        tokens[0] += " " + then_tokens.pop(0)
+        
+        return tokens + then_tokens
 
 class IfThenElse(Statement):
 
@@ -388,8 +429,8 @@ class ForNext(Statement):
         if self.step:
             output += "\x88" + str(self.step)
         
-        tokens = [output]
-        body_tokens = visit(self.body) + ["\xed"]
+        tokens = [output, str(NewLine())]
+        body_tokens = visit(self.body) + [str(NewLine()), "\xed"]
         return tokens + body_tokens
 
 class RepeatUntil(Statement):
@@ -401,9 +442,9 @@ class RepeatUntil(Statement):
     
     def visit(self):
     
-        tokens = ["\xf5"]
+        tokens = ["\xf5", str(NewLine())]
         body_tokens = visit(self.body)
-        condition_tokens = ["\xfd" + str(self.condition)]
+        condition_tokens = ["\xfd " + str(self.condition)]
         return tokens + body_tokens + condition_tokens
 
 class DefProc(Statement):
